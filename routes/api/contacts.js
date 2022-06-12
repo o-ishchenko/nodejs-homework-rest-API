@@ -1,9 +1,4 @@
 const express = require("express");
-// const {
-//   contactSchemaCreate,
-//   contactSchemaPatch,
-// } = require("../../models/contact");
-// const { contacts } = require("../../services");
 const {
   getAll,
   getById,
@@ -12,18 +7,19 @@ const {
   updateById,
   updateFavorite,
 } = require("../../controllers/contacts");
+const { auth } = require("../../middlewares/auth");
 const router = express.Router();
 
-router.get("/", getAll);
+router.get("/", auth, getAll);
 
-router.get("/:contactId", getById);
+router.get("/:contactId", auth, getById);
 
-router.post("/", addContact);
+router.post("/", auth, addContact);
 
-router.delete("/:contactId", deleteById);
+router.delete("/:contactId", auth, deleteById);
 
-router.put("/:contactId", updateById);
+router.put("/:contactId", auth, updateById);
 
-router.patch("/:contactId", updateFavorite);
+router.patch("/:contactId", auth, updateFavorite);
 
 module.exports = router;
