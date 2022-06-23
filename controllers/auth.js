@@ -1,4 +1,5 @@
 const authService = require("../services/auth.service");
+const { uploadImage } = require("../services/image.service");
 const { schemaRegister, schemaLogin, schemaUpdate } = require("../models/user");
 
 const registerUser = async (req, res, next) => {
@@ -14,6 +15,7 @@ const registerUser = async (req, res, next) => {
     res.status(201).json({
       email: user.email,
       subscription: user.subscription,
+      avatarURL: user.avatarURL,
     });
   } catch (e) {
     next(e);
@@ -73,7 +75,7 @@ const updateSubscription = async (req, res, next) => {
       return;
     }
     const { userId } = req.params;
-    const user = await authService.updateSubscription(userId, req.body);
+    const user = await authService.updateUser(userId, req.body);
     if (!user) {
       res.status(404).json({
         message: "Not Found",
@@ -86,10 +88,23 @@ const updateSubscription = async (req, res, next) => {
   }
 };
 
+const uploadAvatar = async (req, res, next) => {
+  try {
+    const { _id: id } = req.user;
+    const avatarURL = await uploadImage(id, req.file);
+    await authService.updateUser(id, { avatarURL });
+
+    res.json({ avatarURL });
+  } catch (e) {
+    next(e);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   currentUser,
   updateSubscription,
+  uploadAvatar,
 };
