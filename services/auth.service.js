@@ -65,8 +65,8 @@ const authenticateUser = async (token) => {
   }
 };
 
-const updateSubscription = async (userId, body) => {
-  return await User.findByIdAndUpdate(userId, body, { new: true });
+const updateUser = async (userId, data) => {
+  return User.findByIdAndUpdate(userId, data, { new: true });
 };
 
 module.exports = {
@@ -75,5 +75,5 @@ module.exports = {
   logoutUser,
   authenticateUser,
   currentUser,
-  updateSubscription,
+  updateUser,
 };
