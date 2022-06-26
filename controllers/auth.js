@@ -1,6 +1,12 @@
 const authService = require("../services/auth.service");
 const { uploadImage } = require("../services/image.service");
-const { schemaRegister, schemaLogin, schemaUpdate } = require("../models/user");
+const emailService = require("../services/email.service");
+const {
+  schemaRegister,
+  schemaLogin,
+  schemaUpdate,
+  schemaResendVerification,
+} = require("../models/user");
 
 const registerUser = async (req, res, next) => {
   try {
@@ -12,10 +18,67 @@ const registerUser = async (req, res, next) => {
       return;
     }
     const user = await authService.registerUser(req.body);
+    await emailService.sendEmail(user.email, user.verificationToken);
     res.status(201).json({
       email: user.email,
       subscription: user.subscription,
       avatarURL: user.avatarURL,
+    });
+  } catch (e) {
+    next(e);
+  }
+};
+const verifyUser = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    console.log(verificationToken);
+    const user = await authService.findUser({ verificationToken });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+    }
+
+    await authService.updateUser(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
+    return res.status(200).json({
+      code: 200,
+      message: "Verification successful",
+    });
+  } catch (e) {
+    next(e);
+  }
+};
+
+const resendVerifyUser = async (req, res, next) => {
+  try {
+    const { error } = schemaResendVerification.validate(req.body);
+    if (error) {
+      console.log(error);
+      res.status(400).json({
+        message: "Error from Joi: missing required field email",
+      });
+      return;
+    }
+    const { email } = req.body;
+    const user = await authService.findUser({ email });
+    console.log(user);
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.verify) {
+      res.status(404).json({
+        message: "Verification has already been passed",
+      });
+    }
+    await emailService.sendEmail(user.email, user.verificationToken);
+    return res.status(200).json({
+      code: 200,
+      message: "Verification email sent",
     });
   } catch (e) {
     next(e);
@@ -107,4 +170,6 @@ module.exports = {
   currentUser,
   updateSubscription,
   uploadAvatar,
+  verifyUser,
+  resendVerifyUser,
 };
